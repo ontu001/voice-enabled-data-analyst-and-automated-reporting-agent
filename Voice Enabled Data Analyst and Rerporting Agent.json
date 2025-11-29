@@ -1,0 +1,491 @@
+{
+  "name": "Voice Enabled Data Analyst and Rerporting Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ad07ed2a-2fb1-4ebe-816f-071df274677c",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -656,
+        32
+      ],
+      "id": "cb8a16d7-6c25-4b7b-8e48-32ea7a06a828",
+      "name": "Webhook",
+      "webhookId": "ad07ed2a-2fb1-4ebe-816f-071df274677c"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.davoice }}",
+        "options": {
+          "systemMessage": "=You are a structured, reliable business data analysis assistant integrated inside an n8n workflow.\n\n# Role\nYou receive a cleaned user command from the ElevenLabs voice interface via webhook.  \nInterpret the command, read and analyze inventory data from the connected Google Sheet, and return clear insights to n8n.\n\n# Capabilities\n- Read inventory data from the Google Sheet using the sheet-read tool.\n- Perform simple business analytics: totals, low-stock detection, comparisons, changes, or summaries.\n- Use the date provided by the n8n “Date & Time” node when needed (for timestamping insights).\n- If the workflow provides a file path (local), include it in your response under \"attachment_url\".\n\n# Output Behavior\n- Respond with a concise, business-focused summary.\n- Use only data available from the Google Sheet — never make up numbers.\n- If the user’s intent is unclear, ask a clarifying question.\n- If the user asks for something outside the available data, request more details.\n\n# Response Format\nReturn a structured JSON object like this:\n\n{\n  \"summary\": \"<your insight summary>\",\n  \"attachment_url\": \"<local_file_path_or_empty>\"\n}\n\nRules:\n- \"attachment_url\" must be the exact local file path provided by the workflow (e.g., \"/mnt/data/inventory_export.csv\") or an empty string \"\".\n- Do not wrap JSON in markdown or quotes.\n- Do not output anything outside the JSON object.\n\n# Examples\n{\n  \"summary\": \"Total inventory is 1,423 units. Three items are below minimum threshold.\",\n  \"attachment_url\": \"\"\n}\n\n{\n  \"summary\": \"Low-stock alert: Item A (4 units), Item D (2 units), Item F (6 units).\",\n  \"attachment_url\": \"/mnt/data/inventory_export.csv\"\n}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -320,
+        -80
+      ],
+      "id": "0acc0956-ee90-4555-9d1c-d6eafe6eedc6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -512,
+        176
+      ],
+      "id": "9",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "da context",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        176
+      ],
+      "id": "bde2b2e8-a51b-46e0-a980-2b3ba10ff006",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1HB7UBGJMn8e2fMgt3L2S5IgN08lBC0m5JNiH3YvALDI",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HB7UBGJMn8e2fMgt3L2S5IgN08lBC0m5JNiH3YvALDI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1069128960,
+          "mode": "list",
+          "cachedResultName": "inventory1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1HB7UBGJMn8e2fMgt3L2S5IgN08lBC0m5JNiH3YvALDI/edit#gid=1069128960"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -128,
+        176
+      ],
+      "id": "c21e8db3-82d6-4689-87cf-850f7923585d",
+      "name": "View Inventory Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "timezone": "Asia/Dhaka"
+        }
+      },
+      "type": "n8n-nodes-base.dateTimeTool",
+      "typeVersion": 2,
+      "position": [
+        48,
+        160
+      ],
+      "id": "c70a28a5-5f9e-435e-8888-e645e1b6c6db",
+      "name": "Date & Time"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        160,
+        32
+      ],
+      "id": "743f81a6-aecb-463c-b248-92ade0472d7e",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "businessQuestion",
+              "value": "High-Value Assets: Which products contribute the most to the Total Potential Profit (calculated as (RetailPrice - UnitCost) * StockQuantity)? List the top 5 by total potential profit."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        464
+      ],
+      "id": "767b5cb6-3ff6-4765-812e-1b27b005b110",
+      "name": "Set Business Question"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1HB7UBGJMn8e2fMgt3L2S5IgN08lBC0m5JNiH3YvALDI",
+          "mode": "list"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1069128960,
+          "mode": "list"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -32,
+        688
+      ],
+      "id": "9a3a1e76-19af-4167-8a03-866ad0083962",
+      "name": "Get Rows from Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "",
+          "name": "Personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.businessQuestion }}",
+        "options": {
+          "systemMessage": "=You are a data visualization assistant.\n\nThe user will give a request like the business question provided.\n\nYour task:\n1. Select the right data (labels = product names, values = totalPotentialProfit).\n2. Prepare two arrays: one for labels and one for numeric values.\n3. Always return only valid JSON: {\"labels\": [...], \"values\": [...]}.\n\nDo not include explanations, markdown, or code blocks."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        464
+      ],
+      "id": "0a64d510-b2d5-43f4-96b6-b750b0656043",
+      "name": "Data Analyst"
+    },
+    {
+      "parameters": {
+        "jsCode": "let rawOutput = items[0].json.output;\nrawOutput = rawOutput.replace(/```json\\s*|\\s*```/g, '');\nrawOutput = rawOutput.replace(/^json\\s*/, '');\nlet parsed = {};\ntry {\n  const firstParse = JSON.parse(rawOutput);\n  if (typeof firstParse === 'string') {\n    parsed = JSON.parse(firstParse);\n  } else {\n    parsed = firstParse;\n  }\n} catch (err) {\n  throw new Error('Failed to parse AI Agent output as JSON: ' + err.message);\n}\nreturn [{ json: { labels: parsed.labels ?? [], values: parsed.values ?? [] } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        144,
+        464
+      ],
+      "id": "9e9850c6-b2a0-424b-b9e3-3f85d327645f",
+      "name": "Clean Data"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "={{ $('Set Business Question').item.json.businessQuestion }}\n{{ $('Data Analyst').item.json.output }}"
+            }
+          ]
+        },
+        "options": {
+          "systemMessage": "=You are a professional data analyst assistant.\n\nYou will receive two arrays:\n1️⃣ An array of item labels (e.g. product names)\n2️⃣ An array of numeric values (e.g. sales or profit figures for those products).\n\nYour task is to analyze this dataset and generate a clear, natural-language summary suitable for inclusion in a professional email.\n\nYour summary must:\n- Begin with a general overview of how many items were analyzed and the total and average value\n- Identify and name the highest-performing item and its value\n- Identify and name the lowest-performing item and its value\n- Comment briefly on any noticeable spread, disparity, or distribution in performance\n- Optionally suggest that further review might be needed if there’s a large gap between top and bottom performers\n\nStyle:\n- Professional, polished English\n- 3-5 concise sentences\n- No formatting, markdown, or bullet points — plain text only\n\nExample style:\n\"The dataset includes 4 products, generating a total profit of €33,343.50 and an average of €8,335.88 per item. Widget D delivered the highest profit at €13,362.26, while Widget C contributed the least at €4,303.67. There is a significant performance gap between these products, suggesting that Widget D is a key driver of profitability while Widget C may require closer analysis.\"\n\nDo NOT output JSON or any technical data structures — plain English narrative only.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        368,
+        464
+      ],
+      "id": "c",
+      "name": "Generate Email Summary",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const labels = $('Clean Data').first().json.labels;\nconst values = $('Clean Data').first().json.values;\nconst cleanedLabels = labels.map(l => String(l));\nconst cleanedValues = values.map(v => Number(v));\n\nconst configLine = { type: 'line', data: { labels: cleanedLabels, datasets: [{ label: 'Total Potential Profit', data: cleanedValues, borderWidth: 3, pointStyle: 'circle' }] }, options: { scales: { y: { beginAtZero: true } } } };\nconst configBar = { type: 'bar', data: { labels: cleanedLabels, datasets: [{ label: 'Total Potential Profit', data: cleanedValues, borderWidth: 3 }] }, options: { scales: { y: { beginAtZero: true } } } };\nconst configPie = { type: 'pie', data: { labels: cleanedLabels, datasets: [{ label: 'Total Potential Profit', data: cleanedValues }] } };\n\nreturn [{ json: { ...items[0].json, chartLineUrl: `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(configLine))}`, chartBarUrl: `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(configBar))}`, chartPieUrl: `https://quickchart.io/chart?c=${encodeURIComponent(JSON.stringify(configPie))}` } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        464
+      ],
+      "id": "ab857308-6b99-4607-9048-77720168e0a6",
+      "name": "Write HTML"
+    },
+    {
+      "parameters": {
+        "sendTo": "teasy179@gmail.com",
+        "subject": "Daily High-Value Assets Report",
+        "message": "=<div style=\"font-family: Arial, sans-serif; color: #333;\"><h2>📊 High-Value Assets Report</h2><div style=\"background-color: #f9f9f9; border: 1px solid #ddd; border-radius: 6px; padding: 12px 15px; margin-bottom: 20px; font-size: 0.95em; line-height: 1.5;\">{{ $json.content.parts[0].text }}</div><table cellspacing=\"10\" cellpadding=\"0\" border=\"0\" style=\"width: 100%;\"><tr><td align=\"center\" valign=\"top\" style=\"width: 33%;\"><h3>📈 Line Chart</h3><img src=\"{{ $json.chartLineUrl }}\" style=\"max-width: 100%; border: 1px solid #ddd; border-radius: 4px;\"></td><td align=\"center\" valign=\"top\" style=\"width: 33%;\"><h3>📊 Bar Chart</h3><img src=\"{{ $json.chartBarUrl }}\" style=\"max-width: 100%; border: 1px solid #ddd; border-radius: 4px;\"></td><td align=\"center\" valign=\"top\" style=\"width: 33%;\"><h3>🧩 Pie Chart</h3><img src=\"{{ $json.chartPieUrl }}\" style=\"max-width: 100%; border: 1px solid #ddd; border-radius: 4px;\"></td></tr></table><p style=\"font-size: 0.9em; color: #888;\">Generated automatically by your AI analysis assistant 🚀</p></div>",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        944,
+        464
+      ],
+      "id": "",
+      "name": "Send Email",
+      "webhookId": "08148277-f8c0-414e-874e-f430b465c545",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -208,
+        688
+      ],
+      "id": "",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "",
+          "name": "personal"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "triggerTimes": {
+          "item": [
+            {
+              "hour": 8
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.cron",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        464
+      ],
+      "id": "dc2a7eb9-5524-4b55-bb34-0c2b3b470b78",
+      "name": "Daily Cron Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "View Inventory Data": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Date & Time": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Business Question": {
+      "main": [
+        [
+          {
+            "node": "Data Analyst",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Rows from Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "Data Analyst",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Data Analyst": {
+      "main": [
+        [
+          {
+            "node": "Clean Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clean Data": {
+      "main": [
+        [
+          {
+            "node": "Generate Email Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Email Summary": {
+      "main": [
+        [
+          {
+            "node": "Write HTML",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write HTML": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Data Analyst",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Daily Cron Trigger": {
+      "main": [
+        [
+          {
+            "node": "Set Business Question",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0169ac00-6c31-4a96-9ba5-7df6ad2e40c7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8aa7a6b00703250dcbefcb510baac06d8bd02203b4f9c49a6f275db8e3adde34"
+  },
+  "id": "yStebnirWo0RIvV7",
+  "tags": []
+}
